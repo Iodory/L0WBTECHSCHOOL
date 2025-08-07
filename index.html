@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Поиск заказа</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+    }
+    input, button {
+      padding: 8px;
+      font-size: 16px;
+    }
+    #result {
+      margin-top: 20px;
+      white-space: pre-wrap;
+      background-color: #f5f5f5;
+      padding: 10px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Поиск заказа по ID</h2>
+  <input type="text" id="orderID" placeholder="Введите Order UID" />
+  <button onclick="fetchOrder()">Найти</button>
+
+  <div id="result"></div>
+
+  <script>
+    async function fetchOrder() {
+      const orderID = document.getElementById('orderID').value;
+      if (!orderID) {
+        alert("Введите Order UID");
+        return;
+      }
+
+      const resEl = document.getElementById('result');
+      resEl.textContent = 'Загрузка...';
+
+      try {
+        const response = await fetch(`http://localhost:8080/order?order_id=${orderID}`);
+        if (!response.ok) {
+          resEl.textContent = 'Заказ не найден';
+          return;
+        }
+
+        const data = await response.json();
+        resEl.textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        resEl.textContent = 'Ошибка запроса: ' + error;
+      }
+    }
+  </script>
+</body>
+</html>

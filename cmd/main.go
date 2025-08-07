@@ -22,7 +22,11 @@ func main() {
 	groupID := "test-group"
 	go kafka.StartConsumer(broker, topic, groupID, order)
 
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "../index.html")
+	})
 	http.HandleFunc("/order", hanlders.GetOrder(order))
+
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal(err)
 	}
