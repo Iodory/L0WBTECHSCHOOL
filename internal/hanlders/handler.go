@@ -25,7 +25,10 @@ func GetOrder(orderCache *cache.OrderCache) http.HandlerFunc {
 				return
 			}
 
-			orderCache.Set(order)
+			if err := orderCache.Set(order); err != nil {
+				http.Error(w, "ошибка записи в кеш", http.StatusBadRequest)
+				return
+			}
 		}
 
 		w.Header().Set("Content-Type", "application/json")

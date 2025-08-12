@@ -1,0 +1,19 @@
+server:
+  port: 8080
+
+kafka:
+  brokers:
+    - "localhost:9092"
+  topic: "test-topic"
+  group_id: "test-group"
+
+database:
+  host: "localhost"
+  port: 5432
+  user: "postgres"
+  password: "G0Lang_DB!7x@9zQw"
+  dbname: "LOWB"
+  sslmode: "disable"
+
+cache:
+  ttl_seconds: 300

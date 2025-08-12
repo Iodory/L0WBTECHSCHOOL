@@ -3,23 +3,34 @@ package cache
 import (
 	"sync"
 	"testex/internal/models"
+	"time"
 )
 
 type OrderCache struct {
 	mu     sync.RWMutex
-	orders map[string]models.Order
+	orders map[string]CasheOrder
+	ttl    time.Duration
+}
+type CasheOrder struct {
+	order models.Order
+	added time.Time
 }
 
-func NewOrderCache() *OrderCache {
+func NewOrderCache(ttl time.Duration) (*OrderCache, error) {
 	return &OrderCache{
-		orders: make(map[string]models.Order),
-	}
+		orders: make(map[string]CasheOrder),
+		ttl:    ttl,
+	}, nil
 }
 
-func (c *OrderCache) Set(order models.Order) {
+func (c *OrderCache) Set(order models.Order) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.orders[order.OrderUID] = order
+	c.orders[order.OrderUID] = CasheOrder{
+		order: order,
+		added: time.Now(),
+	}
+	return nil
 }
 
 func (c *OrderCache) Get(orderUID string) (models.Order, bool) {
@@ -27,16 +38,22 @@ func (c *OrderCache) Get(orderUID string) (models.Order, bool) {
 	defer c.mu.Unlock()
 
 	order, ok := c.orders[orderUID]
-	return order, ok
+	if !ok {
+		return models.Order{}, false
+	}
+	if time.Since(order.added) > c.ttl {
+		return models.Order{}, false
+	}
+	return order.order, true
 }
 
-func (c *OrderCache) GetAll() map[string]models.Order {
+func (c *OrderCache) GetAll() (map[string]models.Order, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	result := make(map[string]models.Order)
 	for k, v := range c.orders {
-		result[k] = v
+		result[k] = v.order
 	}
-	return result
+	return result, nil
 }

@@ -156,7 +156,6 @@ func getItemsByOrderUID(db *sql.DB, orderUID string) ([]models.Item, error) {
 func GetOrderByID(db *sql.DB, orderUID string) (models.Order, error) {
 	var order models.Order
 
-	// Получаем основную информацию о заказе
 	queryOrder := `
 		SELECT order_uid, track_number, entry, locale, internal_signature, customer_id, 
 		       delivery_service, shardkey, sm_id, date_created, oof_shard
@@ -174,7 +173,6 @@ func GetOrderByID(db *sql.DB, orderUID string) (models.Order, error) {
 		return order, err
 	}
 
-	// Получаем Delivery
 	queryDelivery := `
 		SELECT name, phone, zip, city, address, region, email
 		FROM deliveries
@@ -188,7 +186,6 @@ func GetOrderByID(db *sql.DB, orderUID string) (models.Order, error) {
 		return order, err
 	}
 
-	// Получаем Payment
 	queryPayment := `
 		SELECT transaction, request_id, currency, provider, amount, payment_dt, bank, delivery_cost, goods_total, custom_fee
 		FROM payments
@@ -203,7 +200,6 @@ func GetOrderByID(db *sql.DB, orderUID string) (models.Order, error) {
 		return order, err
 	}
 
-	// Получаем Items (множество)
 	queryItems := `
 		SELECT chrt_id, track_number, price, rid, name, sale, size, total_price, nm_id, brand, status
 		FROM items
