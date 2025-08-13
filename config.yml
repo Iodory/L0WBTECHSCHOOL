@@ -3,7 +3,7 @@ server:
 
 kafka:
   brokers:
-    - "localhost:9092"
+    - "127.0.0.1:9092"
   topic: "test-topic"
   group_id: "test-group"
 

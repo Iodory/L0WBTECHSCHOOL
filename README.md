@@ -48,8 +48,7 @@ docker-compose up -d
 psql -f init.sql -U postgres
 
 # Запустить сервис
-go run cmd/main.go
-
+go run ./cmd
 
 # Пример запроса к API:
 curl http://localhost:8080/order/123
