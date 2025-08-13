@@ -16,7 +16,9 @@ func getPathMig() string {
 	if err != nil {
 		log.Fatal("Ошибка в директории", err)
 	}
-	return "file://" + filepath.Join(wd, "migrations")
+
+	path := filepath.ToSlash(filepath.Join(wd, "migrations"))
+	return "file://" + path
 }
 
 func RunMigration(dsn string) {

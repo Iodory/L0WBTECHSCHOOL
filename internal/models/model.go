@@ -1,6 +1,11 @@
 package models
 
-import "time"
+import (
+	"errors"
+	"fmt"
+	"strings"
+	"time"
+)
 
 type Order struct {
 	OrderUID          string    `json:"order_uid"`
@@ -57,4 +62,64 @@ type Item struct {
 	NmID        int64  `json:"nm_id"`
 	Brand       string `json:"brand"`
 	Status      int    `json:"status"`
+}
+
+func (o *Order) Validate() error {
+	if strings.TrimSpace(o.OrderUID) == "" {
+		return errors.New("order_uid не должен быть пустым")
+	}
+	if strings.TrimSpace(o.TrackNumber) == "" {
+		return errors.New("track_number не должен быть пустым")
+	}
+	if o.DateCreated.IsZero() {
+		return errors.New("date_created обязателен")
+	}
+	if len(o.Items) == 0 {
+		return errors.New("заказ должен содержать хотя бы один item")
+	}
+	if err := o.Delivery.Validate(); err != nil {
+		return fmt.Errorf("delivery: %e", err)
+	}
+	if err := o.Payment.Validate(); err != nil {
+		return fmt.Errorf("payment: %e", err)
+	}
+	for i, item := range o.Items {
+		if err := item.Validate(); err != nil {
+			return fmt.Errorf("item[%d]: %e", i, err)
+		}
+	}
+	return nil
+}
+
+func (d *Delivery) Validate() error {
+	if strings.TrimSpace(d.Name) == "" {
+		return errors.New("delivery.name не должен быть пустым")
+	}
+	if strings.TrimSpace(d.Phone) == "" {
+		return errors.New("delivery.phone не должен быть пустым")
+	}
+	return nil
+}
+
+func (p *Payment) Validate() error {
+	if strings.TrimSpace(p.Transaction) == "" {
+		return errors.New("payment.transaction не должен быть пустым")
+	}
+	if p.Amount < 0 {
+		return errors.New("payment.amount не может быть отрицательным")
+	}
+	return nil
+}
+
+func (i *Item) Validate() error {
+	if strings.TrimSpace(i.Name) == "" {
+		return errors.New("item.name не должен быть пустым")
+	}
+	if i.Price < 0 {
+		return errors.New("item.price не может быть отрицательным")
+	}
+	if i.TotalPrice < 0 {
+		return errors.New("item.total_price не может быть отрицательным")
+	}
+	return nil
 }

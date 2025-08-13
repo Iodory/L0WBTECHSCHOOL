@@ -1,4 +1,4 @@
-CREATE TABLE items (
+CREATE TABLE IF NOT EXISTS items (
     id SERIAL PRIMARY KEY,       
     order_uid VARCHAR(50),
     chrt_id BIGINT,

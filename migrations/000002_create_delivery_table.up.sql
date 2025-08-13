@@ -1,4 +1,4 @@
-CREATE TABLE delivery (
+CREATE TABLE IF NOT EXISTS delivery (
     order_uid VARCHAR(50) PRIMARY KEY,
     name VARCHAR(100),
     phone VARCHAR(20),

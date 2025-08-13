@@ -1,4 +1,4 @@
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
     order_uid VARCHAR(50) PRIMARY KEY,
     track_number VARCHAR(100),
     entry VARCHAR(100),

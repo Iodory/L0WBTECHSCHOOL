@@ -1,28 +1,26 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"testex/internal/cache"
 	"testex/internal/config"
 	"testex/internal/db"
 	"testex/internal/hanlders"
-	"testex/internal/kafka"
+	kafffka "testex/internal/kafka"
 	"testex/internal/migrations"
 	"time"
 )
 
 func main() {
 	cfg, err := config.LoadConfig("config.yml")
-
 	if err != nil {
 		log.Fatal("Ошибка загрузки конфига", err)
-	}
-
-	order, err := cache.NewOrderCache(5 * time.Minute)
-	if err != nil {
-		log.Fatal("Ошибка создания кеша", err)
 	}
 
 	dsn := fmt.Sprintf(
@@ -39,20 +37,53 @@ func main() {
 		log.Fatal(err)
 	}
 
+	orderCache := cache.NewOrderCache(16, 5*time.Minute)
+
+	migrations.RunMigration(dsn)
+
+	if err := cache.WarmUpCache(db.DB, orderCache); err != nil {
+		log.Fatal("Ошибка прогрева", err)
+	}
+
 	broker := cfg.Kafka.Brokers
 	topic := cfg.Kafka.Topic
 	groupID := cfg.Kafka.GroupID
 
-	migrations.RunMigration(dsn)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	go kafka.StartConsumer(broker, topic, groupID, order)
+	go kafffka.StartConsumer(ctx, broker, topic, groupID, orderCache)
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "../index.html")
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "index.html")
 	})
-	http.HandleFunc("/order", hanlders.GetOrder(order))
+	mux.HandleFunc("/order", hanlders.GetOrder(orderCache))
 
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	srv := &http.Server{
+		Addr:    ":8080",
+		Handler: mux,
+	}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("HTTP сервер упал: %v", err)
+		}
+	}()
+
+	stroper := make(chan os.Signal, 1)
+	signal.Notify(stroper, os.Interrupt, syscall.SIGINT)
+
+	<-stroper
+	log.Println("Сигнал стоп")
+	cancel()
+
+	shutCtx, shutCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutCancel()
+
+	if err := srv.Shutdown(shutCtx); err != nil {
 		log.Fatal(err)
 	}
+
+	log.Println("Приложение остановлено")
 }

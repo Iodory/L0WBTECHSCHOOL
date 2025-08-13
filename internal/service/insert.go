@@ -38,7 +38,7 @@ func InsertOrder(db *sql.DB, order models.Order) error {
 	}
 
 	_, err = tx.Exec(`
-        INSERT INTO deliveries (
+        INSERT INTO delivery (
             order_uid, name, phone, zip, city, address, region, email
         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
 		order.OrderUID, order.Delivery.Name, order.Delivery.Phone, order.Delivery.Zip,
@@ -48,7 +48,7 @@ func InsertOrder(db *sql.DB, order models.Order) error {
 	}
 
 	_, err = tx.Exec(`
-        INSERT INTO payments (
+        INSERT INTO payment (
             transaction, order_uid, request_id, currency, provider, amount, payment_dt, bank, delivery_cost, goods_total, custom_fee
         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
 		order.Payment.Transaction, order.OrderUID, order.Payment.RequestID, order.Payment.Currency,
